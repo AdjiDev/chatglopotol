@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Glopotol</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .typing-dots span {
+            animation: blink 1.5s infinite;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.3s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.6s;
+        }
+
+        @keyframes blink {
+            0%, 100% {
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body class="h-screen flex flex-col justify-between text-white">
+
+    <div id="chatContainer" class="flex-1 p-6 overflow-y-auto space-y-4">
+    </div>
+
+    <div class="p-4 bg-gray-800 flex items-center">
+        <textarea id="userInput" placeholder="Chat Glopotol . . ." class="flex-1 bg-gray-700 text-white rounded-lg p-3 resize-none h-12"></textarea>
+        <button id="sendBtn" class="ml-4 bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition">Send</button>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chatContainer');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+    
+        const apiUrl = 'https://api.agatz.xyz/api/gpt4o?message=';
+    
+        function addMessage(content, isAI = false, isTyping = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${isAI ? 'justify-start' : 'justify-end'}`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = `max-w-sm p-3 rounded-lg shadow-lg ${
+                isAI ? 'bg-gray-700 text-left' : 'bg-blue-500 text-right'
+            } ${isTyping ? 'typing-dots' : ''}`;
+            
+            if (isTyping) {
+                bubble.innerHTML = '<span>.</span><span>.</span><span>.</span>';
+            } else {
+                // Mengonversi konten Markdown ke HTML
+                bubble.innerHTML = marked.parse(content);
+            }
+    
+            messageDiv.appendChild(bubble);
+            chatContainer.appendChild(messageDiv);
+    
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    
+        async function getAIResponse(message) {
+            addMessage('', true, true); 
+            const response = await fetch(apiUrl + encodeURIComponent(message));
+            const data = await response.json();
+    
+            const typingDots = chatContainer.querySelector('.typing-dots');
+            if (typingDots) typingDots.parentNode.remove();
+            addMessage(data.data.result, true);
+        }
+    
+        sendBtn.addEventListener('click', () => {
+            const message = userInput.value.trim();
+            if (message === '') return;
+    
+            addMessage(message, false); 
+            userInput.value = '';
+            getAIResponse(message); 
+        });
+    
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendBtn.click();
+            }
+        });
+    </script>
+    
+
+</body>
+
+</html>
