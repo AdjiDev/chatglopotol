@@ -68,13 +68,11 @@
             if (isTyping) {
                 bubble.innerHTML = '<span>.</span><span>.</span><span>.</span>';
             } else {
-                // Mengonversi Markdown ke HTML
+
                 let htmlContent = marked.parse(content);
     
-                // Menyaring HTML untuk keamanan menggunakan DOMPurify
                 htmlContent = DOMPurify.sanitize(htmlContent);
     
-                // Menambahkan konten yang sudah dibersihkan
                 bubble.innerHTML = htmlContent;
             }
     
