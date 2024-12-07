@@ -9,10 +9,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.0/dist/purify.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body {
             background: linear-gradient(135deg, #1e293b, #0f172a);
-            font-family: 'Inter', sans-serif;
+            font-family: 'Press Start 2P', sans-serif;
+            overflow: hidden;
+            margin: 0;
+            height: 100vh;
+            position: relative;
         }
 
         .typing-dots span {
@@ -36,71 +41,105 @@
                 opacity: 1;
             }
         }
+
+        /* Meteor effect styles */
+        .meteor {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            width: 10px;
+            height: 10px;
+            opacity: 0;
+            animation: meteorFall 1s linear infinite;
+        }
+
+        @keyframes meteorFall {
+            0% {
+                transform: translateY(-100px) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) scale(0.5);
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 
 <body class="h-screen flex flex-col justify-between text-white">
+    <!-- Chat Container -->
+    <div id="chatContainer" class="flex-1 p-6 overflow-y-auto space-y-4"></div>
 
-    <div id="chatContainer" class="flex-1 p-6 overflow-y-auto space-y-4">
-    </div>
-
-    <div class="p-4 bg-gray-800 flex items-center">
+    <!-- Input Section -->
+    <div class="p-4 bg-gray-800 flex items-center" style="position: sticky; bottom: 0;">
         <textarea id="userInput" placeholder="Chat Glopotol . . ." class="flex-1 bg-gray-700 text-white rounded-lg p-3 resize-none h-12"></textarea>
         <button id="sendBtn" class="ml-4 bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition">Send</button>
     </div>
 
     <script>
+        function generateMeteor() {
+            const meteor = document.createElement('div');
+            meteor.className = 'meteor';
+            meteor.style.left = `${Math.random() * window.innerWidth}px`; 
+            meteor.style.animationDuration = `${Math.random() * 1.5 + 1}s`; 
+            meteor.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 75%)`;  
+
+            document.body.appendChild(meteor);
+
+            meteor.addEventListener('animationend', () => {
+                meteor.remove();
+            });
+        }
+
+        setInterval(generateMeteor, 100);
+
         const chatContainer = document.getElementById('chatContainer');
         const userInput = document.getElementById('userInput');
         const sendBtn = document.getElementById('sendBtn');
-    
         const apiUrl = 'https://api.agatz.xyz/api/gpt4o?message=';
-    
+
         function addMessage(content, isAI = false, isTyping = false) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `flex ${isAI ? 'justify-start' : 'justify-end'}`;
-            
+
             const bubble = document.createElement('div');
             bubble.className = `max-w-sm p-3 rounded-lg shadow-lg ${
                 isAI ? 'bg-gray-700 text-left' : 'bg-blue-500 text-right'
             } ${isTyping ? 'typing-dots' : ''}`;
-            
+
             if (isTyping) {
                 bubble.innerHTML = '<span>.</span><span>.</span><span>.</span>';
             } else {
-
                 let htmlContent = marked.parse(content);
-    
                 htmlContent = DOMPurify.sanitize(htmlContent);
-    
                 bubble.innerHTML = htmlContent;
             }
-    
+
             messageDiv.appendChild(bubble);
             chatContainer.appendChild(messageDiv);
-    
+
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
-    
+
         async function getAIResponse(message) {
-            addMessage('', true, true); 
+            addMessage('', true, true);
             const response = await fetch(apiUrl + encodeURIComponent(message));
             const data = await response.json();
-    
+
             const typingDots = chatContainer.querySelector('.typing-dots');
             if (typingDots) typingDots.parentNode.remove();
             addMessage(data.data.result, true);
         }
-    
+
         sendBtn.addEventListener('click', () => {
             const message = userInput.value.trim();
             if (message === '') return;
-    
-            addMessage(message, false); 
+
+            addMessage(message, false);
             userInput.value = '';
-            getAIResponse(message); 
+            getAIResponse(message);
         });
-    
+
         userInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -108,9 +147,6 @@
             }
         });
     </script>
-    
-    
-
 </body>
 
 </html>
